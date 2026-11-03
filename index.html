@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Thiền Tự Yên Bình - Chùa Online 3D</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0d0704;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", serif;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+    .merit-float {
+      position: absolute;
+      pointer-events: none;
+      font-weight: 800;
+      color: #ffd700;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 140, 0, 0.5);
+      animation: floatFade 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      z-index: 50;
+    }
+    @keyframes floatFade {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-70px) scale(1.3); }
+    }
+  </style>
+</head>
+<body class="relative w-full h-full text-amber-100">
+
+  <!-- 3D Canvas Scene -->
+  <div id="canvas-container"></div>
+
+  <!-- Header Giao diện -->
+  <header class="absolute top-3 inset-x-0 mx-auto max-w-md w-[92%] z-20 flex items-center justify-between px-4 py-2.5 rounded-2xl bg-amber-950/70 backdrop-blur-md border border-amber-500/30 shadow-2xl">
+    <div class="flex items-center space-x-2">
+      <span class="text-xl">🛕</span>
+      <div>
+        <h1 class="text-sm font-bold text-amber-200 tracking-wide drop-shadow">Thanh Liên Thiền Tự</h1>
+        <p class="text-[10px] text-amber-400/80">Chùa Online 3D • Sansa Style</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center space-x-2 bg-stone-900/80 px-3 py-1.5 rounded-xl border border-amber-600/40">
+      <span class="text-xs text-amber-300/80 font-medium">Công đức:</span>
+      <span id="merit-badge" class="text-sm font-extrabold text-amber-300">0</span>
+    </div>
+  </header>
+
+  <!-- Hướng dẫn tương tác & chọn chỗ ngồi -->
+  <div class="absolute top-16 inset-x-0 mx-auto text-center z-10 pointer-events-none px-4">
+    <span class="inline-block px-3 py-1 rounded-full bg-black/40 backdrop-blur-sm border border-amber-500/20 text-[11px] text-amber-300/90 shadow">
+      ✨ Chạm vào các đệm tròn (bồ đoàn) dưới sàn để đổi góc ngồi thiền
+    </span>
+  </div>
+
+  <!-- Bảng chọn bồ đoàn nhanh (Floating Seat Picker) -->
+  <div class="absolute bottom-28 inset-x-0 mx-auto max-w-xs w-[90%] z-20 flex justify-center items-center gap-2 px-3 py-1.5 rounded-full bg-stone-950/60 backdrop-blur-sm border border-amber-500/20">
+    <span class="text-[11px] text-amber-200/70 mr-1">Vị trí:</span>
+    <button onclick="selectSeat(0)" id="btn-seat-0" class="w-7 h-7 rounded-full text-xs font-bold transition-all bg-amber-500 text-stone-950 shadow-lg shadow-amber-500/30">1</button>
+    <button onclick="selectSeat(1)" id="btn-seat-1" class="w-7 h-7 rounded-full text-xs font-bold transition-all bg-stone-800 text-amber-200 border border-amber-500/30">2</button>
+    <button onclick="selectSeat(2)" id="btn-seat-2" class="w-7 h-7 rounded-full text-xs font-bold transition-all bg-stone-800 text-amber-200 border border-amber-500/30">3</button>
+    <button onclick="selectSeat(3)" id="btn-seat-3" class="w-7 h-7 rounded-full text-xs font-bold transition-all bg-stone-800 text-amber-200 border border-amber-500/30">4</button>
+    <button onclick="selectSeat(4)" id="btn-seat-4" class="w-7 h-7 rounded-full text-xs font-bold transition-all bg-stone-800 text-amber-200 border border-amber-500/30">5</button>
+  </div>
+
+  <!-- Thanh công cụ hành thiền dưới đáy -->
+  <footer class="absolute bottom-4 inset-x-0 mx-auto max-w-md w-[92%] z-20 grid grid-cols-3 gap-2 p-2 rounded-2xl bg-stone-950/80 backdrop-blur-md border border-amber-500/30 shadow-2xl">
+    <button id="btn-bow" onclick="handleBow(event)" class="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl bg-gradient-to-b from-amber-900/60 to-stone-900 border border-amber-600/40 hover:border-amber-400 active:scale-95 transition-transform duration-100">
+      <span class="text-xl mb-0.5">🙇‍♂️</span>
+      <span class="text-xs font-bold text-amber-200">Lạy Phật</span>
+      <span class="text-[9px] text-amber-400/60">+3 Công đức</span>
+    </button>
+
+    <button id="btn-moktak" onclick="handleMoktak(event)" class="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl bg-gradient-to-b from-amber-800/80 to-amber-950 border border-amber-500 hover:border-amber-300 active:scale-95 transition-transform duration-100 shadow-lg shadow-amber-950">
+      <span class="text-xl mb-0.5 animate-bounce">🪵</span>
+      <span class="text-xs font-bold text-amber-100">Gõ Mõ</span>
+      <span class="text-[9px] text-amber-300/80">+1 Công đức</span>
+    </button>
+
+    <button id="btn-bell" onclick="handleBell(event)" class="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl bg-gradient-to-b from-amber-900/60 to-stone-900 border border-amber-600/40 hover:border-amber-400 active:scale-95 transition-transform duration-100">
+      <span class="text-xl mb-0.5">🔔</span>
+      <span class="text-xs font-bold text-amber-200">Đánh Chuông</span>
+      <span class="text-[9px] text-amber-400/60">+5 Công đức</span>
+    </button>
+  </footer>
+
+  <script>
+    /* ==========================================================================
+       1. HỆ THỐNG ÂM THANH THIỀN ĐỊNH BẰNG WEB AUDIO API
+       ========================================================================== */
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    // Âm mõ gỗ (Moktak) khô giòn, chuẩn âm thiền
+    function playMoktakSound() {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(560, now);
+      osc.frequency.exponentialRampToValueAtTime(140, now + 0.07);
+
+      gain.gain.setValueAtTime(0.8, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.09);
+    }
+
+    // Âm chuông gia trì / đại hồng chung ngân vang ấm áp
+    function playTempleBell(rootFreq = 440, duration = 3.5) {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+      const harmonics = [1.0, 1.51, 2.02, 2.76, 3.42];
+
+      harmonics.forEach((ratio, index) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(rootFreq * ratio, now);
+
+        const initialVol = 0.35 / (index + 1);
+        gain.gain.setValueAtTime(initialVol, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + duration + 0.1);
+      });
+    }
+
+    /* ==========================================================================
+       2. KHỞI TẠO THREE.JS VÀ KHÔNG GIAN CHÍNH ĐIỆN 3D
+       ========================================================================== */
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0c0704);
+    scene.fog = new THREE.FogExp2(0x140a05, 0.045);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2 - 0.02; // Không nhìn xuyên sàn
+    controls.minDistance = 2.5;
+    controls.maxDistance = 14;
+
+    /* --- Hệ Thống Ánh Sáng --- */
+    const ambientLight = new THREE.AmbientLight(0x4a2a18, 0.9);
+    scene.add(ambientLight);
+
+    // Đèn hào quang Phật
+    const buddhaHaloLight = new THREE.PointLight(0xffc04d, 1.8, 12, 1.2);
+    buddhaHaloLight.position.set(0, 3.8, -1.8);
+    scene.add(buddhaHaloLight);
+
+    // Hai ngọn nến lung linh nhấp nháy
+    const candleLightLeft = new THREE.PointLight(0xff7a18, 1.2, 7);
+    candleLightLeft.position.set(-1.6, 1.3, -0.6);
+    scene.add(candleLightLeft);
+
+    const candleLightRight = new THREE.PointLight(0xff7a18, 1.2, 7);
+    candleLightRight.position.set(1.6, 1.3, -0.6);
+    scene.add(candleLightRight);
+
+    /* --- Vật Liệu Phong Cách Gỗ & Vàng --- */
+    const goldMaterial = new THREE.MeshStandardMaterial({
+      color: 0xf5b700,
+      metalness: 0.85,
+      roughness: 0.28,
+      emissive: 0x3d2800,
+      emissiveIntensity: 0.15
+    });
+
+    const darkWoodMaterial = new THREE.MeshStandardMaterial({
+      color: 0x1f1109,
+      roughness: 0.45,
+      metalness: 0.1
+    });
+
+    const lotusPedalMaterial = new THREE.MeshStandardMaterial({
+      color: 0xe07a5f,
+      roughness: 0.4,
+      metalness: 0.2,
+      emissive: 0x5a1807,
+      emissiveIntensity: 0.2
+    });
+
+    /* --- Sàn và Tường Chính Điện --- */
+    const floorGeo = new THREE.PlaneGeometry(24, 24);
+    const floor = new THREE.Mesh(floorGeo, darkWoodMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Bức bình phong gỗ sau lưng tượng Phật
+    const screenGeo = new THREE.BoxGeometry(7, 6, 0.2);
+    const screenMesh = new THREE.Mesh(screenGeo, new THREE.MeshStandardMaterial({ color: 0x140a05, roughness: 0.7 }));
+    screenMesh.position.set(0, 3, -3);
+    scene.add(screenMesh);
+
+    // Cột gỗ lớn hai bên
+    const pillarGeo = new THREE.CylinderGeometry(0.28, 0.28, 8, 20);
+    const leftPillar = new THREE.Mesh(pillarGeo, darkWoodMaterial);
+    leftPillar.position.set(-3.2, 4, -2.5);
+    const rightPillar = leftPillar.clone();
+    rightPillar.position.set(3.2, 4, -2.5);
+    scene.add(leftPillar, rightPillar);
+
+    /* --- Bệ Thờ & Đài Sen Dát Vàng --- */
+    const altarGroup = new THREE.Group();
+
+    // Bàn thờ gỗ chạm
+    const altarTable = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.0, 1.8), darkWoodMaterial);
+    altarTable.position.set(0, 0.5, -1.2);
+    altarGroup.add(altarTable);
+
+    // Đài sen nhiều tầng
+    const lotusBase = new THREE.Group();
+    lotusBase.position.set(0, 1.1, -1.2);
+
+    // Tầng đĩa sen
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 0.9, 0.25, 32), goldMaterial);
+    lotusBase.add(disc);
+
+    // Tạo các cánh sen 3D bao quanh đài
+    const petalCount = 14;
+    for (let i = 0; i < petalCount; i++) {
+      const angle = (i / petalCount) * Math.PI * 2;
+      const petalGeo = new THREE.ConeGeometry(0.22, 0.6, 5);
+      petalGeo.rotateX(Math.PI / 3.2);
+
+      const petal = new THREE.Mesh(petalGeo, lotusPedalMaterial);
+      petal.position.set(Math.cos(angle) * 1.05, 0.15, Math.sin(angle) * 1.05);
+      petal.rotation.y = -angle + Math.PI / 2;
+      lotusBase.add(petal);
+    }
+    altarGroup.add(lotusBase);
+
+    /* --- Tượng Đức Phật Thích Ca Mâu Ni 3D --- */
+    const buddhaGroup = new THREE.Group();
+    buddhaGroup.position.set(0, 1.35, -1.2);
+
+    // Chân xếp kiết già (Lotus Pose)
+    const legsGeo = new THREE.TorusGeometry(0.7, 0.28, 16, 32, Math.PI * 1.3);
+    const legs = new THREE.Mesh(legsGeo, goldMaterial);
+    legs.rotation.x = Math.PI / 2;
+    legs.rotation.z = -Math.PI * 0.15;
+    legs.position.y = 0.2;
+    buddhaGroup.add(legs);
+
+    // Thân Phật
+    const torsoGeo = new THREE.CylinderGeometry(0.42, 0.55, 1.1, 24);
+    const torso = new THREE.Mesh(torsoGeo, goldMaterial);
+    torso.position.y = 0.85;
+    buddhaGroup.add(torso);
+
+    // Cánh tay & Thủ ấn thiền định (Dhyana Mudra)
+    const armLeftGeo = new THREE.CylinderGeometry(0.12, 0.1, 0.7, 12);
+    const armLeft = new THREE.Mesh(armLeftGeo, goldMaterial);
+    armLeft.position.set(-0.45, 0.7, 0.1);
+    armLeft.rotation.z = -Math.PI / 4;
+    armLeft.rotation.x = Math.PI / 6;
+
+    const armRight = new THREE.Mesh(armLeftGeo, goldMaterial);
+    armRight.position.set(0.45, 0.7, 0.1);
+    armRight.rotation.z = Math.PI / 4;
+    armRight.rotation.x = Math.PI / 6;
+    buddhaGroup.add(armLeft, armRight);
+
+    // Đầu Phật
+    const headGeo = new THREE.SphereGeometry(0.32, 28, 28);
+    const head = new THREE.Mesh(headGeo, goldMaterial);
+    head.position.y = 1.6;
+    buddhaGroup.add(head);
+
+    // Nhục kế (Ushnisha) trên đỉnh đầu
+    const ushnisha = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), goldMaterial);
+    ushnisha.position.y = 1.95;
+    buddhaGroup.add(ushnisha);
+
+    // Vòng Hào Quang Xoay Phía Sau
+    const haloRadius = 1.25;
+    const haloGeo = new THREE.RingGeometry(haloRadius - 0.15, haloRadius, 48);
+    const haloMat = new THREE.MeshBasicMaterial({
+      color: 0xffd23f,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.85
+    });
+    const haloMesh = new THREE.Mesh(haloGeo, haloMat);
+    haloMesh.position.set(0, 1.7, -0.45);
+    buddhaGroup.add(haloMesh);
+
+    // Hào quang tỏa tia sáng mặt trời
+    const sunRayGroup = new THREE.Group();
+    for (let i = 0; i < 24; i++) {
+      const rayAngle = (i / 24) * Math.PI * 2;
+      const ray = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.04, 0.4),
+        new THREE.MeshBasicMaterial({ color: 0xffae00, side: THREE.DoubleSide, transparent: true, opacity: 0.6 })
+      );
+      ray.position.set(Math.cos(rayAngle) * 1.35, Math.sin(rayAngle) * 1.35, 0);
+      ray.rotation.z = rayAngle - Math.PI / 2;
+      sunRayGroup.add(ray);
+    }
+    sunRayGroup.position.set(0, 1.7, -0.44);
+    buddhaGroup.add(sunRayGroup);
+
+    altarGroup.add(buddhaGroup);
+    scene.add(altarGroup);
+
+    /* --- Đồ Thờ: Chân Nến & Bát Hương --- */
+    function createCandle(x, z) {
+      const group = new THREE.Group();
+      group.position.set(x, 1.0, z);
+
+      // Chân nến đồng
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.35, 16), goldMaterial);
+      group.add(base);
+
+      // Thân nến sáp
+      const wax = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.04, 0.45, 12),
+        new THREE.MeshStandardMaterial({ color: 0xfdf0d5, roughness: 0.3 })
+      );
+      wax.position.y = 0.35;
+      group.add(wax);
+
+      // Ngọn lửa nhỏ
+      const flame = new THREE.Mesh(
+        new THREE.ConeGeometry(0.04, 0.12, 8),
+        new THREE.MeshBasicMaterial({ color: 0xffe600 })
+      );
+      flame.position.y = 0.62;
+      group.add(flame);
+
+      return { group, flame };
+    }
+
+    const candleLeft = createCandle(-1.6, -0.6);
+    const candleRight = createCandle(1.6, -0.6);
+    scene.add(candleLeft.group, candleRight.group);
+
+    // Bát hương đồng
+    const incenseBowl = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 0.22, 18), goldMaterial);
+    incenseBowl.position.set(0, 1.1, -0.45);
+    scene.add(incenseBowl);
+
+    // Nén nhang đỏ
+    for (let i = -1; i <= 1; i++) {
+      const stick = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.008, 0.008, 0.4, 6),
+        new THREE.MeshBasicMaterial({ color: 0x991b1b })
+      );
+      stick.position.set(i * 0.05, 1.3, -0.45);
+      scene.add(stick);
+    }
+
+    /* --- Hệ Thống Khói Trầm Hương (Particle System) --- */
+    const smokeCount = 45;
+    const smokeGeo = new THREE.BufferGeometry();
+    const smokePositions = new Float32Array(smokeCount * 3);
+    const smokeSpeeds = new Float32Array(smokeCount);
+
+    for (let i = 0; i < smokeCount; i++) {
+      smokePositions[i * 3 + 0] = (Math.random() - 0.5) * 0.1;
+      smokePositions[i * 3 + 1] = 1.35 + Math.random() * 1.5;
+      smokePositions[i * 3 + 2] = -0.45 + (Math.random() - 0.5) * 0.1;
+      smokeSpeeds[i] = 0.005 + Math.random() * 0.008;
+    }
+    smokeGeo.setAttribute('position', new THREE.BufferAttribute(smokePositions, 3));
+
+    const smokeMat = new THREE.PointsMaterial({
+      color: 0xd4af37,
+      size: 0.1,
+      transparent: true,
+      opacity: 0.35,
+      blending: THREE.AdditiveBlending
+    });
+    const smokeParticles = new THREE.Points(smokeGeo, smokeMat);
+    scene.add(smokeParticles);
+
+    /* ==========================================================================
+       3. HỆ THỐNG BỒ ĐOÀN (ĐỆM NGỒI THIỀN) VÀ ĐỔI GÓC NHÌN
+       ========================================================================== */
+    const seatPositions = [
+      { id: 0, x: 0,    z: 2.2, label: 'Chính diện' },
+      { id: 1, x: -1.4, z: 2.8, label: 'Tả thiền thất' },
+      { id: 2, x: 1.4,  z: 2.8, label: 'Hữu thiền thất' },
+      { id: 3, x: -2.3, z: 4.2, label: 'Hàng sau trái' },
+      { id: 4, x: 2.3,  z: 4.2, label: 'Hàng sau phải' }
+    ];
+
+    const cushions = [];
+    const cushionGeo = new THREE.CylinderGeometry(0.55, 0.6, 0.18, 24);
+    const cushionMatDefault = new THREE.MeshStandardMaterial({
+      color: 0x5a3118,
+      roughness: 0.7,
+      metalness: 0.1
+    });
+    const cushionMatActive = new THREE.MeshStandardMaterial({
+      color: 0xbb521e,
+      roughness: 0.5,
+      metalness: 0.2,
+      emissive: 0xff6b35,
+      emissiveIntensity: 0.35
+    });
+
+    seatPositions.forEach((seat) => {
+      const mesh = new THREE.Mesh(cushionGeo, seat.id === 0 ? cushionMatActive : cushionMatDefault);
+      mesh.position.set(seat.x, 0.09, seat.z);
+      mesh.receiveShadow = true;
+      mesh.userData = { seatId: seat.id };
+      scene.add(mesh);
+      cushions.push(mesh);
+    });
+
+    /* --- Nhân Vật Thiền Giả (Tọa Thiền Nhân) --- */
+    const monk = new THREE.Group();
+
+    // Áo tràng thiền màu lam/nâu
+    const monkRobeMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.6 });
+    const monkBody = new THREE.Mesh(new THREE.ConeGeometry(0.38, 0.8, 16), monkRobeMat);
+    monkBody.position.y = 0.45;
+    monk.add(monkBody);
+
+    // Chân bắt chéo
+    const monkLegs = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.2, 16), monkRobeMat);
+    monkLegs.position.y = 0.15;
+    monk.add(monkLegs);
+
+    // Đầu chú tiểu thiền sư
+    const monkHead = new THREE.Mesh(new THREE.SphereGeometry(0.18, 18, 18), new THREE.MeshStandardMaterial({ color: 0xfbd0a0, roughness: 0.4 }));
+    monkHead.position.y = 0.95;
+    monk.add(monkHead);
+
+    monk.position.set(seatPositions[0].x, 0.15, seatPositions[0].z);
+    monk.rotation.y = Math.PI; // Quay mặt vào ban Phật
+    scene.add(monk);
+
+    /* --- Vị trí mục tiêu Camera động --- */
+    let currentSeatIndex = 0;
+    const targetCameraPos = new THREE.Vector3(0, 2.0, 5.2);
+    const targetLookAt = new THREE.Vector3(0, 1.8, -1.2);
+    camera.position.set(0, 2.5, 6.0);
+    controls.target.copy(targetLookAt);
+
+    function selectSeat(index) {
+      if (index < 0 || index >= seatPositions.length) return;
+      currentSeatIndex = index;
+      const targetSeat = seatPositions[index];
+
+      // Cập nhật chất liệu bồ đoàn
+      cushions.forEach((c, idx) => {
+        c.material = idx === index ? cushionMatActive : cushionMatDefault;
+      });
+
+      // Cập nhật trạng thái nút UI
+      for (let i = 0; i < 5; i++) {
+        const btn = document.getElementById(`btn-seat-${i}`);
+        if (i === index) {
+          btn.className = "w-7 h-7 rounded-full text-xs font-bold transition-all bg-amber-500 text-stone-950 shadow-lg shadow-amber-500/30";
+        } else {
+          btn.className = "w-7 h-7 rounded-full text-xs font-bold transition-all bg-stone-800 text-amber-200 border border-amber-500/30";
+        }
+      }
+
+      // Di chuyển nhân vật chú tiểu về bồ đoàn mới
+      monk.position.set(targetSeat.x, 0.15, targetSeat.z);
+
+      // Camera lùi nhẹ sau lưng bồ đoàn được chọn
+      targetCameraPos.set(targetSeat.x * 0.7, 1.6 + targetSeat.z * 0.15, targetSeat.z + 1.8);
+
+      // Phát âm thanh tiếng sột soạt tĩnh lặng
+      playMoktakSound();
+    }
+
+    // Tương tác Raycast: Bấm trực tiếp lên bồ đoàn 3D
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+
+    function onPointerDown(event) {
+      // Chỉ kích hoạt khi click chuột/tap vào canvas, không dính vào các thanh UI
+      if (event.clientY < 80 || event.clientY > window.innerHeight - 110) return;
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(pointer, camera);
+      const intersects = raycaster.intersectObjects(cushions);
+
+      if (intersects.length > 0) {
+        const hitSeat = intersects[0].object.userData.seatId;
+        if (hitSeat !== undefined) {
+          selectSeat(hitSeat);
+        }
+      }
+    }
+    window.addEventListener('pointerdown', onPointerDown);
+
+    /* ==========================================================================
+       4. LOGIC TÂM LINH & TƯƠNG TÁC NGƯỜI DÙNG
+       ========================================================================== */
+    let meritScore = parseInt(localStorage.getItem('zen_temple_merit') || '0', 10);
+    const meritEl = document.getElementById('merit-badge');
+    meritEl.innerText = meritScore;
+
+    function triggerMeritEffect(amount, event) {
+      meritScore += amount;
+      localStorage.setItem('zen_temple_merit', meritScore);
+      meritEl.innerText = meritScore;
+
+      // Hiệu ứng chữ nổi bay lên màn hình
+      const floatText = document.createElement('div');
+      floatText.className = 'merit-float text-base sm:text-lg';
+      floatText.innerText = `+${amount} Công đức 🙏`;
+
+      let x = window.innerWidth / 2;
+      let y = window.innerHeight / 2;
+
+      if (event && event.clientX) {
+        x = event.clientX;
+        y = event.clientY;
+      }
+
+      floatText.style.left = `${x - 45}px`;
+      floatText.style.top = `${y - 30}px`;
+
+      document.body.appendChild(floatText);
+      setTimeout(() => floatText.remove(), 1000);
+    }
+
+    // Hành vi Gõ Mõ
+    function handleMoktak(e) {
+      getAudioContext();
+      playMoktakSound();
+      triggerMeritEffect(1, e);
+
+      // Hiệu ứng gõ nảy nhẹ bàn thờ
+      altarGroup.position.y = 0.03;
+      setTimeout(() => { altarGroup.position.y = 0; }, 80);
+
+      if (navigator.vibrate) navigator.vibrate(25);
+    }
+
+    // Hành vi Đánh Chuông
+    function handleBell(e) {
+      getAudioContext();
+      playTempleBell(293.66, 4.0); // Nốt D4 ấm trầm
+      triggerMeritEffect(5, e);
+
+      // Đèn hào quang Phật sáng bừng lên theo nhịp chuông
+      buddhaHaloLight.intensity = 3.5;
+      setTimeout(() => { buddhaHaloLight.intensity = 1.8; }, 2200);
+
+      if (navigator.vibrate) navigator.vibrate(60);
+    }
+
+    // Hành vi Lạy Phật
+    let isBowing = false;
+    function handleBow(e) {
+      if (isBowing) return;
+      isBowing = true;
+      getAudioContext();
+      playTempleBell(440, 2.5);
+      triggerMeritEffect(3, e);
+
+      const startRotX = monk.rotation.x;
+      const startTime = performance.now();
+      const bowDuration = 1200; // 1.2 giây
+
+      function bowStep(time) {
+        const elapsed = time - startTime;
+        const progress = Math.min(elapsed / bowDuration, 1.0);
+
+        // Sin wave cho động tác lạy xuống và đứng lên
+        const bowAngle = Math.sin(progress * Math.PI) * 0.75;
+        monk.rotation.x = bowAngle;
+
+        // Camera hơi cúi xuống đồng điệu
+        controls.target.y = 1.8 - bowAngle * 0.6;
+
+        if (progress < 1.0) {
+          requestAnimationFrame(bowStep);
+        } else {
+          monk.rotation.x = startRotX;
+          controls.target.y = 1.8;
+          isBowing = false;
+        }
+      }
+      requestAnimationFrame(bowStep);
+
+      if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
+    }
+
+    /* ==========================================================================
+       5. VÒNG LẶP RENDER HOẠT ẢNH (ANIMATION LOOP)
+       ========================================================================== */
+    let clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const elapsedTime = clock.getElapsedTime();
+
+      // 1. Hào quang xoay tròn đều đặn
+      haloMesh.rotation.z = elapsedTime * 0.3;
+      sunRayGroup.rotation.z = -elapsedTime * 0.2;
+
+      // 2. Lửa nến nhấp nháy tự nhiên
+      const flickerLeft = Math.sin(elapsedTime * 12) * 0.2 + Math.cos(elapsedTime * 23) * 0.15;
+      candleLightLeft.intensity = 1.2 + flickerLeft;
+      candleLeft.flame.scale.set(1 + flickerLeft * 0.2, 1 + flickerLeft * 0.4, 1 + flickerLeft * 0.2);
+
+      const flickerRight = Math.sin(elapsedTime * 14 + 1) * 0.2 + Math.cos(elapsedTime * 19 + 2) * 0.15;
+      candleLightRight.intensity = 1.2 + flickerRight;
+      candleRight.flame.scale.set(1 + flickerRight * 0.2, 1 + flickerRight * 0.4, 1 + flickerRight * 0.2);
+
+      // 3. Khói trầm hương bay lượn
+      const positions = smokeGeo.attributes.position.array;
+      for (let i = 0; i < smokeCount; i++) {
+        positions[i * 3 + 1] += smokeSpeeds[i];
+        positions[i * 3 + 0] += Math.sin(elapsedTime * 2 + i) * 0.0015;
+
+        // Reset hạt khi bay lên cao
+        if (positions[i * 3 + 1] > 3.0) {
+          positions[i * 3 + 1] = 1.35;
+          positions[i * 3 + 0] = (Math.random() - 0.5) * 0.08;
+        }
+      }
+      smokeGeo.attributes.position.needsUpdate = true;
+
+      // 4. Mượt mà di chuyển camera đến vị trí bồ đoàn (LERP)
+      camera.position.lerp(targetCameraPos, 0.04);
+      controls.update();
+
+      renderer.render(scene, camera);
+    }
+
+    // Tự động thích ứng kích thước màn hình
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Bắt đầu vòng lặp khi trang tải xong
+    window.onload = function () {
+      animate();
+    };
+  </script>
+</body>
+</html>
