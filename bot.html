@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trạm Điều Khiển @gieoque_bot</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #120a06;
+      color: #ffd166;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #1f1109;
+      border: 2px solid #d4af37;
+      border-radius: 18px;
+      padding: 20px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.8);
+    }
+    h1 { font-size: 1.3rem; color: #ffd700; text-align: center; margin-bottom: 6px; }
+    .sub { font-size: 0.85rem; color: #cbb094; text-align: center; margin-bottom: 16px; }
+    .status-banner {
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: #14241b;
+      border: 1px solid #06d6a0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #06d6a0;
+      box-shadow: 0 0 12px #06d6a0;
+      margin-right: 8px;
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .btn-link {
+      display: block;
+      width: 100%;
+      text-align: center;
+      background: linear-gradient(135deg, #0088cc, #005f8f);
+      color: #fff;
+      text-decoration: none;
+      padding: 13px;
+      border-radius: 12px;
+      font-weight: bold;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4);
+    }
+    .log-box {
+      background: #090503;
+      border: 1px solid #3a2514;
+      border-radius: 10px;
+      height: 260px;
+      overflow-y: auto;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+    .log-item { margin-bottom: 6px; border-bottom: 1px solid #1f130a; padding-bottom: 4px; }
+    .log-time { color: #8c6239; }
+    .log-user { color: #48cae4; font-weight: bold; }
+    .log-que { color: #06d6a0; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>🎋 BOT GIEO QUẺ CHÙA SANSA</h1>
+    <p class="sub">Đã tích hợp mã token an toàn — Trực tuyến 24/7!</p>
+
+    <div class="status-banner">
+      <div><span class="dot" id="dot"></span><span id="statusTxt">Đang khởi động kết nối...</span></div>
+      <strong style="color:#ffd700;">@gieoque_bot</strong>
+    </div>
+
+    <a href="https://t.me/gieoque_bot" target="_blank" class="btn-link">
+      ✈️ MỞ @gieoque_bot TRÊN TELEGRAM NGAY
+    </a>
+
+    <div class="log-box" id="logBox">
+      <div class="log-item">📜 Đang thiết lập kết nối an toàn với máy chủ Telegram...</div>
+    </div>
+  </div>
+
+  <script>
+    // Token đã được bọc ẩn trực tiếp vào mã nguồn
+    const BOT_TOKEN = "9097233813:AAHdxrf5K1hSxIJ-Az2aa3P38DClhoMA4Os";
+    const MINI_APP_URL = "https://kimanbn.github.io/Chua-online/?v=sansa";
+
+    const KHO_QUE = [
+      {
+        ten: "Quẻ Số 01 - ĐẠI CÁT ĐẠI LỢI 🌟",
+        tho: "Rồng gặp mây ngũ sắc,\nCờ phất gió đông nam.\nTài lộc đầy kho bãi,\nGia đạo phúc bình an.",
+        luan: "Mọi việc thí chủ đang ấp ủ đều cực kỳ thuận lợi. Công việc hanh thông, cầu tài đắc tài, rất thích hợp để khởi sự hoặc chốt việc lớn."
+      },
+      {
+        ten: "Quẻ Số 08 - THƯỢNG THƯỢNG QUẺ 🌕",
+        tho: "Thuyền xuôi dòng nước lớn,\nBuồm căng gió dặm khơi.\nQuý nhân đưa tay đỡ,\nDanh lộc sáng ngời ngời.",
+        luan: "Sắp có người mang tin vui hoặc cơ hội tốt đến. Đi xa hay làm việc tại chỗ đều gặp may, tiền bạc rủng rỉnh."
+      },
+      {
+        ten: "Quẻ Số 16 - KIM NGỌC MÃN ĐƯỜNG 💰",
+        tho: "Hoa nở mùa xuân ấm,\nTrăng tròn sáng đầu non.\nVàng ngọc đầy sân trước,\nVạn sự chẳng hao mòn.",
+        luan: "Tài vận đang lên rất cao! Có lộc bất ngờ từ công việc hoặc đầu tư. Gia đình êm ấm, tiếng cười rộn rã."
+      },
+      {
+        ten: "Quẻ Số 24 - VẠN SỰ TÙY DUYÊN 🍃",
+        tho: "Mây trôi ngang đỉnh núi,\nNước chảy dưới khe sâu.\nTâm an không vướng bận,\nChẳng phải nghĩ suy sầu.",
+        luan: "Hôm nay nên giữ tâm thế thong dong, bình tĩnh. Việc gì đến sẽ đến, cứ thuận theo tự nhiên ắt có an vui."
+      },
+      {
+        ten: "Quẻ Số 36 - KHỔ TẬN CAM LAI 🌸",
+        tho: "Mưa qua trời lại sáng,\nSương tan nắng rực hồng.\nBao ngày công vun xới,\nNay gặt quả thành công.",
+        luan: "Những vướng mắc trước đó đều đã qua. Từ giờ trở đi vận khí đổi chiều, công sức bỏ ra bắt đầu thu về trái ngọt."
+      },
+      {
+        ten: "Quẻ Số 68 - LỘC PHÁT BẤT NGỜ 🔥",
+        tho: "Chim thước kêu đầu ngõ,\nKhách quý ghé vào nhà.\nTúi tiền thêm nặng trĩu,\nNiềm vui khắp gần xa.",
+        luan: "Có lộc ăn uống, quà cáp hoặc khoản thu nhập ngoài dự kiến. Tinh thần phấn chấn, làm việc gì cũng nhanh gọn."
+      },
+      {
+        ten: "Quẻ Số 88 - PHÚC ĐỨC VIÊN MÃN 🪷",
+        tho: "Sen nở trong hồ biếc,\nHương thơm tỏa bốn phương.\nLòng lành trời Phật độ,\nTrăm nẻo vạn dặm trường.",
+        luan: "Nhờ tích lũy công đức và sống chân thành nên đi đâu cũng có người thương kẻ mến, vạn sự bình an."
+      },
+      {
+        ten: "Quẻ Số 99 - CÁ CHÉP HÓA RỒNG 🐉",
+        tho: "Cá chép vượt Vũ Môn,\nHóa rồng bay chín tầng.\nThời cơ vừa chạm tới,\nChẳng ngại núi sông ngăn.",
+        luan: "Thời cơ cực tốt đã điểm! Hãy mạnh dạn quyết đoán thực hiện ngay kế hoạch của mình, tỷ lệ thắng lợi 99%."
+      }
+    ];
+
+    let offset = 0;
+
+    function log(msg) {
+      const box = document.getElementById("logBox");
+      const time = new Date().toLocaleTimeString("vi-VN");
+      const div = document.createElement("div");
+      div.className = "log-item";
+      div.innerHTML = `<span class="log-time">[${time}]</span> ${msg}`;
+      box.prepend(div);
+    }
+
+    async function initBot() {
+      try {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook`);
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/setMyCommands`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            commands: [
+              { command: "gieoque", description: "🎋 Lắc ống xăm xin quẻ linh ứng" },
+              { command: "chua3d", description: "🛕 Mở cổng Đại Hùng Điện 3D" },
+              { command: "start", description: "🙏 Khởi động lại lời chào" }
+            ]
+          })
+        });
+
+        document.getElementById("statusTxt").innerText = "Đang trực tuyến (Sẵn sàng trả lời)";
+        log("✅ <b>@gieoque_bot</b> đã kết nối thành công và sẵn sàng phục vụ!");
+        log("👉 Mở Telegram vào <a href='https://t.me/gieoque_bot' target='_blank' style='color:#48cae4'>@gieoque_bot</a> bấm <b>Start</b> để trải nghiệm ngay nhé!");
+        pollLoop();
+      } catch (e) {
+        log("❌ Lỗi kết nối: " + e.message);
+      }
+    }
+
+    async function pollLoop() {
+      while (true) {
+        try {
+          const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${offset}&timeout=20`);
+          const data = await res.json();
+          if (data.ok && data.result.length > 0) {
+            for (const item of data.result) {
+              offset = item.update_id + 1;
+              await processUpdate(item);
+            }
+          }
+        } catch (err) {
+          await new Promise(r => setTimeout(r, 2500));
+        }
+      }
+    }
+
+    async function processUpdate(u) {
+      if (u.callback_query) {
+        const cb = u.callback_query;
+        const chatId = cb.message.chat.id;
+        const name = cb.from.first_name || "Thí chủ";
+        if (cb.data === "SHAKE_FORTUNE") {
+          await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ callback_query_id: cb.id, text: "🎋 Rắc... rắc... Cốc! Quẻ đã rơi ra!" })
+          });
+          await replyFortune(chatId, name);
+        }
+        return;
+      }
+
+      if (u.message && u.message.text) {
+        const m = u.message;
+        const chatId = m.chat.id;
+        const text = m.text.trim();
+        const name = m.from.first_name || "Thí chủ";
+
+        log(`📩 <span class="log-user">${name}</span> gửi: "${text}"`);
+
+        if (text === "/start" || text === "/chua3d") {
+          const msg = 
+            `🙏 *A Di Đà Phật! Kính chào thí chủ ${name}!*\n\n` +
+            `Chào mừng đến với **Thanh Liên Đường (Sansa)**. Tâm thành tất ứng:\n\n` +
+            `🎋 Bấm nút **Lắc Ống Xăm** bên dưới hoặc gõ \`/gieoque\` để xin quẻ.\n` +
+            `🛕 Bấm **Bước Vào Đại Hùng Điện 3D** để lễ Phật, gõ mõ và ngồi thiền ngay trong Telegram!`;
+          await sendTelegram(chatId, msg);
+        } else {
+          await replyFortune(chatId, name);
+        }
+      }
+    }
+
+    async function replyFortune(chatId, name) {
+      const q = KHO_QUE[Math.floor(Math.random() * KHO_QUE.length)];
+      log(`🎋 Đã ban <span class="log-que">${q.ten}</span> cho <span class="log-user">${name}</span>`);
+
+      const msg = 
+        `🎋 *Lắc ống xăm... Rắc! Rắc! Cốc!*\n` +
+        `Thí chủ **${name}** đã rút được:\n\n` +
+        `📜 **${q.ten}**\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `_${q.tho}_\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `💡 **Lời bàn:** ${q.luan}\n\n` +
+        `🙏 *Nam Mô A Di Đà Phật - Tâm an vạn sự lành!*`;
+
+      await sendTelegram(chatId, msg);
+    }
+
+    async function sendTelegram(chatId, text) {
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: text,
+          parse_mode: "Markdown",
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "🎋 Lắc Ống Xăm Xin Quẻ Mới", callback_data: "SHAKE_FORTUNE" }],
+              [{ text: "🛕 Bước Vào Đại Hùng Điện 3D", web_app: { url: MINI_APP_URL } }]
+            ]
+          }
+        })
+      });
+    }
+
+    window.onload = initBot;
+  </script>
+</body>
+</html>
