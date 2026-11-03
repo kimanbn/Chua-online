@@ -3,203 +3,127 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Thiền Tự Yên Bình</title>
+  <title>Chùa Online - Thiền Tự Yên Bình</title>
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
       user-select: none;
+      -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
     body {
-      background: #140d07;
+      background: #110905 radial-gradient(circle at 50% 30%, #3a1a0c 0%, #0d0603 80%);
       color: #ffd166;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Times New Roman", serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
       padding: 14px 16px 20px;
+      overflow: hidden;
     }
-    .top-header {
+
+    /* Thanh thông tin đỉnh */
+    .top-bar {
       width: 100%;
       max-width: 420px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 10px 16px;
-      background: rgba(35, 20, 12, 0.8);
-      border: 1px solid #8c6239;
-      border-radius: 18px;
+      background: rgba(30, 15, 8, 0.75);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     }
-    .temple-title {
-      font-size: 1.15rem;
-      font-weight: bold;
-      color: #f7c59f;
+    .temple-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffd700;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .merit-badge {
-      background: #3b2214;
+    .merit-counter {
+      background: #2b1408;
       border: 1px solid #d4af37;
-      padding: 4px 14px;
-      border-radius: 14px;
-      font-weight: bold;
+      padding: 5px 14px;
+      border-radius: 16px;
       font-size: 0.95rem;
+      font-weight: bold;
       color: #fff;
     }
-    .altar-view {
+
+    /* Khu vực tượng Phật */
+    .altar-container {
+      position: relative;
+      width: 100%;
+      max-width: 320px;
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      margin: auto 0;
+    }
+    .halo {
+      position: absolute;
+      width: 250px;
+      height: 250px;
+      background: radial-gradient(circle, rgba(255, 215, 0, 0.4) 0%, rgba(255, 183, 3, 0.1) 60%, transparent 80%);
+      border-radius: 50%;
+      animation: pulseGlow 3s ease-in-out infinite alternate;
+      z-index: 1;
+    }
+    @keyframes pulseGlow {
+      0% { transform: scale(0.92); opacity: 0.6; }
+      100% { transform: scale(1.1); opacity: 1; }
+    }
+    .buddha-img {
       position: relative;
+      z-index: 2;
+      max-width: 240px;
+      max-height: 50vh;
+      object-fit: contain;
+      filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
     }
-    .buddha-statue {
-      font-size: 7.5rem;
-      filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.45));
-      animation: gentleGlow 3s ease-in-out infinite alternate;
-    }
-    @keyframes gentleGlow {
-      0% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.3)); }
-      100% { transform: scale(1.03); filter: drop-shadow(0 0 35px rgba(255, 215, 0, 0.65)); }
-    }
-    .incense-burner {
-      margin-top: 10px;
-      font-size: 2.4rem;
+
+    /* Lư hương & Khói trầm */
+    .incense-row {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 16px;
+      margin-top: 10px;
+      z-index: 2;
     }
-    .merit-popup {
+    .incense-stick {
+      font-size: 1.8rem;
+      filter: drop-shadow(0 0 8px #ffb703);
+    }
+
+    /* Hiệu ứng Công Đức bay lên */
+    .merit-toast {
       position: absolute;
       font-size: 1.4rem;
       font-weight: bold;
-      color: #ffd166;
-      text-shadow: 0 0 10px rgba(0,0,0,0.9);
+      color: #ffe66d;
+      text-shadow: 0 0 10px rgba(0,0,0,0.9), 0 0 20px #ffb703;
       pointer-events: none;
-      animation: riseAndFade 0.8s ease-out forwards;
+      animation: floatUp 0.8s ease-out forwards;
+      z-index: 99;
     }
-    @keyframes riseAndFade {
-      0% { opacity: 1; transform: translateY(0); }
-      100% { opacity: 0; transform: translateY(-60px); }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-70px) scale(1.25); }
     }
-    .bottom-bar {
+
+    /* Bàn mõ & Nút bấm */
+    .action-panel {
       width: 100%;
       max-width: 380px;
       display: flex;
-      gap: 12px;
-      justify-content: center;
-    }
-    .action-button {
-      flex: 1;
-      padding: 14px 10px;
-      background: linear-gradient(135deg, #442617, #24130a);
-      border: 1.5px solid #d4af37;
-      border-radius: 16px;
-      color: #fff;
-      font-size: 0.95rem;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.6);
-    }
-    .action-button:active {
-      transform: scale(0.94);
-    }
-  </style>
-</head>
-<body>
-
-  <div class="top-header">
-    <div class="temple-title">🛕 Thiền Tự Yên Bình</div>
-    <div class="merit-badge">Công đức: <span id="meritCount">0</span></div>
-  </div>
-
-  <div class="altar-view" id="altarZone">
-    <div class="buddha-statue">🧘‍♂️</div>
-    <div class="incense-burner">
-      <span>🕯️</span>
-      <span>🪔</span>
-      <span>🕯️</span>
-    </div>
-  </div>
-
-  <div class="bottom-bar">
-    <button class="action-button" onclick="playMo(event)">
-      <span style="font-size: 1.8rem;">🪵</span>
-      <span>Gõ Mõ (+1)</span>
-    </button>
-    <button class="action-button" onclick="playChuong(event)">
-      <span style="font-size: 1.8rem;">🔔</span>
-      <span>Đánh Chuông (+5)</span>
-    </button>
-  </div>
-
-  <script>
-    let merits = 0;
-    let audioCtx = null;
-
-    function initAudio() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      return audioCtx;
-    }
-
-    function playMo(e) {
-      addMerit(1, e);
-      const ctx = initAudio();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(450, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.08);
-      gain.gain.setValueAtTime(0.6, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.1);
-      if (navigator.vibrate) navigator.vibrate(25);
-    }
-
-    function playChuong(e) {
-      addMerit(5, e);
-      const ctx = initAudio();
-      [587.33, 880].forEach((f, idx) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(f, ctx.currentTime);
-        gain.gain.setValueAtTime(0.35 / (idx + 1), ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2.0);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 2.1);
-      });
-      if (navigator.vibrate) navigator.vibrate(60);
-    }
-
-    function addMerit(val, e) {
-      merits += val;
-      document.getElementById('meritCount').innerText = merits;
-      const popup = document.createElement('div');
-      popup.className = 'merit-popup';
-      popup.innerText = `Công đức +${val}`;
-      const rect = e.currentTarget.getBoundingClientRect();
-      popup.style.left = `${rect.left + rect.width / 2 - 40}px`;
-      popup.style.top = `${rect.top - 25}px`;
-      document.body.appendChild(popup);
-      setTimeout(() => popup.remove(), 800);
-    }
-  </script>
-</body>
-</html>
+      justify-content: space-around;
+      gap: 14
