@@ -1,0 +1,567 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Thiền Tự Yên Bình - Chùa Online</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background: #120e0c;
+      color: #f7ede2;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+      touch-action: manipulation;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+    /* Header Bar */
+    header {
+      width: 100%;
+      max-width: 600px;
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(30, 22, 18, 0.7);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(212, 163, 115, 0.2);
+      z-index: 10;
+    }
+    .temple-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #e9c46a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stats {
+      font-size: 0.9rem;
+      background: rgba(233, 196, 106, 0.15);
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(233, 196, 106, 0.3);
+      color: #f4a261;
+      font-weight: 600;
+    }
+    /* Chánh điện Canvas / Sân Chùa */
+    .sanctuary {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      flex: 1;
+      background: radial-gradient(circle at 50% 25%, #3d2314 0%, #1a0f08 60%, #0d0704 100%);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+    }
+    /* Hào quang & Bàn Thờ */
+    .altar-area {
+      position: relative;
+      margin-top: 25px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .halo {
+      position: absolute;
+      top: -15px;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(244,162,97,0.4) 0%, rgba(233,196,106,0.1) 60%, transparent 100%);
+      animation: pulseHalo 4s ease-in-out infinite;
+      z-index: 1;
+    }
+    @keyframes pulseHalo {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.15); opacity: 0.9; }
+    }
+    .buddha-statue {
+      font-size: 4.8rem;
+      z-index: 2;
+      filter: drop-shadow(0 4px 15px rgba(233, 196, 106, 0.5));
+    }
+    .censer {
+      margin-top: -10px;
+      font-size: 1.8rem;
+      z-index: 2;
+      position: relative;
+    }
+    .smoke-container {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    .smoke {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 50%;
+      animation: rise 3s infinite linear;
+    }
+    @keyframes rise {
+      0% { transform: translateY(0) scale(1); opacity: 0.6; }
+      50% { transform: translateY(-30px) translateX(10px) scale(2); opacity: 0.3; }
+      100% { transform: translateY(-60px) translateX(-10px) scale(3); opacity: 0; }
+    }
+    /* Sàn chùa & Bồ đoàn */
+    .cushion-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      margin-top: 40px;
+      z-index: 2;
+    }
+    .cushion {
+      width: 65px;
+      height: 38px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, #934b22 0%, #56270e 100%);
+      border: 2px solid #b86230;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.4);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .cushion.active {
+      border-color: #e9c46a;
+      box-shadow: 0 0 15px #e9c46a;
+    }
+    /* Chú tiểu / Avatar */
+    .monk-avatar {
+      position: absolute;
+      width: 70px;
+      height: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+      z-index: 5;
+      pointer-events: none;
+    }
+    .monk-sprite {
+      font-size: 2.8rem;
+      filter: drop-shadow(0 5px 6px rgba(0,0,0,0.5));
+      transition: transform 0.2s;
+    }
+    .monk-bow {
+      transform: translateY(12px) scaleY(0.8);
+    }
+    .monk-name {
+      background: rgba(0,0,0,0.65);
+      border: 1px solid rgba(233,196,106,0.4);
+      color: #f7ede2;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      white-space: nowrap;
+      margin-top: -4px;
+    }
+    /* Chữ bay hiệu ứng (+1 Công Đức) */
+    .floating-text {
+      position: absolute;
+      color: #e9c46a;
+      font-weight: 700;
+      font-size: 1rem;
+      pointer-events: none;
+      animation: floatUp 1.2s forwards ease-out;
+      z-index: 20;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-50px); opacity: 0; }
+    }
+    /* Bảng Thiền & Hơi Thở */
+    .breath-box {
+      position: absolute;
+      bottom: 20px;
+      background: rgba(20, 15, 12, 0.85);
+      border: 1px solid rgba(233, 196, 106, 0.3);
+      padding: 10px 20px;
+      border-radius: 25px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.4s ease;
+      z-index: 10;
+    }
+    .breath-box.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .breath-circle {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #e9c46a;
+      transition: transform 4s ease-in-out;
+    }
+    .breath-circle.inhale {
+      transform: scale(1.6);
+      background: #2a9d8f;
+    }
+    .breath-circle.exhale {
+      transform: scale(0.8);
+      background: #e76f51;
+    }
+    /* Thanh công cụ / Phím bấm */
+    .controls {
+      width: 100%;
+      max-width: 600px;
+      padding: 15px 12px;
+      background: rgba(25, 18, 14, 0.95);
+      border-top: 1px solid rgba(212, 163, 115, 0.2);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      z-index: 10;
+    }
+    .action-btn {
+      background: linear-gradient(145deg, #322118, #221610);
+      color: #f7ede2;
+      border: 1px solid rgba(212, 163, 115, 0.3);
+      border-radius: 12px;
+      padding: 12px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      touch-action: manipulation;
+    }
+    .action-btn:active {
+      transform: scale(0.94);
+      background: #462c1f;
+      border-color: #e9c46a;
+    }
+    .action-btn .btn-icon {
+      font-size: 1.4rem;
+    }
+    .action-btn.active {
+      background: #e9c46a;
+      color: #1a0f08;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+
+  <!-- Thanh tiêu đề -->
+  <header>
+    <div class="temple-title">
+      <span>🛕</span> Thiền Tự Yên Bình
+    </div>
+    <div class="stats" id="meritCount">Công đức: 0</div>
+  </header>
+
+
+  <!-- Chánh điện Chùa -->
+  <main class="sanctuary" id="sanctuary">
+    <div class="altar-area">
+      <div class="halo"></div>
+      <div class="buddha-statue">🪷</div>
+      <div class="censer">
+        🏺
+        <div class="smoke-container">
+          <div class="smoke" style="animation-delay: 0s;"></div>
+          <div class="smoke" style="animation-delay: 1s;"></div>
+          <div class="smoke" style="animation-delay: 2s;"></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Hàng bồ đoàn -->
+    <div class="cushion-grid">
+      <div class="cushion" onclick="moveMonkTo(this, 1)">1</div>
+      <div class="cushion active" onclick="moveMonkTo(this, 2)">2</div>
+      <div class="cushion" onclick="moveMonkTo(this, 3)">3</div>
+      <div class="cushion" onclick="moveMonkTo(this, 4)">4</div>
+      <div class="cushion" onclick="moveMonkTo(this, 5)">5</div>
+      <div class="cushion" onclick="moveMonkTo(this, 6)">6</div>
+    </div>
+
+
+    <!-- Nhân vật chú tiểu -->
+    <div class="monk-avatar" id="monk">
+      <div class="monk-sprite" id="monkSprite">🧘‍♂️</div>
+      <div class="monk-name" id="monkName" onclick="changeName()">Tiểu Trí Tuệ ✏️</div>
+    </div>
+
+
+    <!-- Thanh dẫn nhịp thở khi tọa thiền -->
+    <div class="breath-box" id="breathBox">
+      <div class="breath-circle" id="breathCircle"></div>
+      <span id="breathText" style="font-size: 0.85rem; color: #f7ede2;">Thở sâu, tĩnh tâm...</span>
+    </div>
+  </main>
+
+
+  <!-- Bảng phím chức năng -->
+  <footer class="controls">
+    <button class="action-btn" onclick="hitMuyu(event)">
+      <span class="btn-icon">🪵</span>
+      <span>Gõ Mõ</span>
+    </button>
+    <button class="action-btn" onclick="ringBell(event)">
+      <span class="btn-icon">🔔</span>
+      <span>Thỉnh Chuông</span>
+    </button>
+    <button class="action-btn" onclick="bowDown()">
+      <span class="btn-icon">🙏</span>
+      <span>Lạy Phật</span>
+    </button>
+    <button class="action-btn" id="meditateBtn" onclick="toggleMeditation()">
+      <span class="btn-icon">🕯️</span>
+      <span id="meditateText">Tọa Thiền</span>
+    </button>
+  </footer>
+
+
+  <script>
+    // --- KHỞI TẠO ÂM THANH TỰ NHIÊN BẰNG WEB AUDIO API ---
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+
+    // 1. Tiếng gõ mõ giòn, vang ấm gỗ
+    function playMuyuSound() {
+      const ctx = getAudioContext();
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(540, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + 0.08);
+
+
+      gainNode.gain.setValueAtTime(1, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+
+
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.12);
+    }
+
+
+    // 2. Tiếng chuông chùa ngân vang đa tầng số
+    function playBellSound() {
+      const ctx = getAudioContext();
+      const freqs = [220, 440, 660, 880];
+      const gains = [0.6, 0.3, 0.15, 0.05];
+
+
+      freqs.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+
+        gainNode.gain.setValueAtTime(gains[i], ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 4.5);
+
+
+        osc.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+
+        osc.start();
+        osc.stop(ctx.currentTime + 4.5);
+      });
+    }
+
+
+    // --- XỬ LÝ ĐIỂM CÔNG ĐỨC & HIỆU ỨNG BAY CHỮ ---
+    let merit = 0;
+    const meritEl = document.getElementById('meritCount');
+
+
+    function addMerit(points, evt, customText) {
+      merit += points;
+      meritEl.textContent = `Công đức: ${merit}`;
+
+
+      const text = document.createElement('div');
+      text.className = 'floating-text';
+      text.textContent = customText || `+${points} Công Đức`;
+
+
+      const rect = sanctuary.getBoundingClientRect();
+      let x = evt ? (evt.clientX || (evt.touches && evt.touches[0].clientX)) : null;
+      let y = evt ? (evt.clientY || (evt.touches && evt.touches[0].clientY)) : null;
+
+
+      if (!x || !y) {
+        const monkRect = monkEl.getBoundingClientRect();
+        x = monkRect.left + 20;
+        y = monkRect.top - 10;
+      }
+
+
+      text.style.left = `${x - rect.left - 30}px`;
+      text.style.top = `${y - rect.top - 20}px`;
+
+
+      sanctuary.appendChild(text);
+      setTimeout(() => text.remove(), 1200);
+    }
+
+
+    // --- HÀNH ĐỘNG CỦA CHÚ TIỂU ---
+    const monkEl = document.getElementById('monk');
+    const monkSprite = document.getElementById('monkSprite');
+    const sanctuary = document.getElementById('sanctuary');
+
+
+    function hitMuyu(e) {
+      playMuyuSound();
+      addMerit(1, e, "🪵 Cốc! +1");
+      monkSprite.style.transform = 'scale(1.15)';
+      setTimeout(() => monkSprite.style.transform = 'scale(1)', 100);
+    }
+
+
+    function ringBell(e) {
+      playBellSound();
+      addMerit(5, e, "🔔 Boong! +5");
+      monkSprite.style.transform = 'translateY(-8px)';
+      setTimeout(() => monkSprite.style.transform = 'translateY(0)', 200);
+    }
+
+
+    function bowDown() {
+      playBellSound();
+      monkSprite.classList.add('monk-bow');
+      addMerit(3, null, "🙏 Thành tâm +3");
+      setTimeout(() => {
+        monkSprite.classList.remove('monk-bow');
+      }, 700);
+    }
+
+
+    // Di chuyển tới bồ đoàn
+    function moveMonkTo(cushionEl, idx) {
+      document.querySelectorAll('.cushion').forEach(c => c.classList.remove('active'));
+      cushionEl.classList.add('active');
+
+
+      const cushionRect = cushionEl.getBoundingClientRect();
+      const sancRect = sanctuary.getBoundingClientRect();
+
+
+      const targetX = cushionRect.left - sancRect.left + (cushionRect.width / 2) - 35;
+      const targetY = cushionRect.top - sancRect.top - 45;
+
+
+      monkEl.style.left = `${targetX}px`;
+      monkEl.style.top = `${targetY}px`;
+    }
+
+
+    // Khởi tạo vị trí ban đầu
+    window.addEventListener('load', () => {
+      const activeCushion = document.querySelector('.cushion.active');
+      if (activeCushion) moveMonkTo(activeCushion, 2);
+    });
+
+
+    // Đổi pháp danh
+    function changeName() {
+      const newName = prompt("Nhập pháp danh mới cho chú tiểu:", "Tiểu Trí Tuệ");
+      if (newName && newName.trim()) {
+        document.getElementById('monkName').textContent = newName.trim() + " ✏️";
+      }
+    }
+
+
+    // Chế độ tọa thiền & hít thở 4-4
+    let isMeditating = false;
+    let breathInterval = null;
+    const breathBox = document.getElementById('breathBox');
+    const breathCircle = document.getElementById('breathCircle');
+    const breathText = document.getElementById('breathText');
+    const meditateBtn = document.getElementById('meditateBtn');
+    const meditateText = document.getElementById('meditateText');
+
+
+    function toggleMeditation() {
+      isMeditating = !isMeditating;
+      if (isMeditating) {
+        meditateBtn.classList.add('active');
+        meditateText.textContent = "Xả Thiền";
+        breathBox.classList.add('show');
+        monkSprite.textContent = "🧘‍♂️";
+        runBreathCycle();
+      } else {
+        meditateBtn.classList.remove('active');
+        meditateText.textContent = "Tọa Thiền";
+        breathBox.classList.remove('show');
+        clearInterval(breathInterval);
+      }
+    }
+
+
+    function runBreathCycle() {
+      let phase = 0; // 0: hít vào, 1: thở ra
+      function cycle() {
+        if (!isMeditating) return;
+        if (phase === 0) {
+          breathCircle.className = 'breath-circle inhale';
+          breathText.textContent = "Hít vào thật sâu...";
+          addMerit(1, null, "Hít sâu...");
+          phase = 1;
+        } else {
+          breathCircle.className = 'breath-circle exhale';
+          breathText.textContent = "Thở ra nhẹ nhàng...";
+          phase = 0;
+        }
+      }
+      cycle();
+      breathInterval = setInterval(cycle, 4000);
+    }
+  </script>
+</body>
+</html>
